@@ -14,8 +14,7 @@ import vn.web.Model.UserEntity;
 public interface UserMapper extends GenericMapper<UserEntity , UserCreationRequest, UserResponse> {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateUser(@MappingTarget UserEntity user , UserUpdateRequest userUpdateRequest );
+    void updateUser(@MappingTarget UserEntity user, UserUpdateRequest request);
 
-//    UserEntity toUserEntity(UserCreationRequest userCreationRequest);
 
 }

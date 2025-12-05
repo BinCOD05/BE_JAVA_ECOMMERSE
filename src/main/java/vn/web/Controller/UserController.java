@@ -3,14 +3,19 @@ package vn.web.Controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import vn.web.Controller.Request.UserChangePasswdRequest;
 import vn.web.Controller.Request.UserCreationRequest;
+import vn.web.Controller.Request.UserPageRequest;
 import vn.web.Controller.Request.UserUpdateRequest;
 import vn.web.Controller.Response.ApiResponse;
+import vn.web.Controller.Response.UserPageResponse;
 import vn.web.Controller.Response.UserResponse;
 import vn.web.Services.UserService;
 import vn.web.Util.SecurityUtils;
@@ -86,6 +91,16 @@ public class UserController {
         return ApiResponse.<UserResponse>builder()
                 .status(HttpStatus.OK.value())
                 .message("created user successful")
+                .build();
+    }
+// Lấy danh sách user/search theo keyword
+    @PostMapping(value = "/search")
+    public ApiResponse<UserPageResponse> findAll(@ModelAttribute UserPageRequest request,
+                                                 @PageableDefault(size = 10 , sort = "createdAt" , direction = Sort.Direction.ASC)Pageable pageable){
+        return ApiResponse.<UserPageResponse>builder()
+                .status(HttpStatus.OK.value())
+                .result(userService.findALl(request , pageable))
+                .message("find user successful")
                 .build();
     }
 

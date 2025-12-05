@@ -23,5 +23,5 @@ public class UserResponse {
     private String phone ;
     private Gender gender ;
     private LocalDateTime createdAt ;
-    private List<AddressEntity> addressEntityList;
+//    private List<AddressEntity> addressEntityList;
 }

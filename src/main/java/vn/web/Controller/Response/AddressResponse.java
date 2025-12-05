@@ -14,9 +14,24 @@ import java.io.Serializable;
 @NoArgsConstructor
 @ToString
 public class AddressResponse   implements Serializable {
+
+    private Long id ;
+
+    private String recipient ;
+
+    private String phone ;
+
     private String ward ;
-    private String street ;
-    private String number ;
-    private String country ;
-    private AddressType addressType ;
+
+    private String city ;
+
+    private String line1 ;
+
+    private String line2 ;
+
+    private String district;
+
+    private AddressType  addressType ;
+
+    private boolean defaultAddress ;
 }

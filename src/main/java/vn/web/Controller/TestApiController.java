@@ -85,40 +85,6 @@ public class TestApiController {
             userService.changePassword(request , id);
         }
 
-        @Operation(summary = "find user" , tags = "find user")
-        @GetMapping(value = "/users")
-        public ApiResponse<Page> findAll(Pageable pageable){
-            return ApiResponse.<Page>builder()
-                    .status(HttpStatus.OK.value())
-                    .message("find user successful")
-                    .result(userService.findAll(pageable))
-                    .build();
-        }
 
-
-
-
-        @Operation(summary = "add address" , tags = "add address")
-        @PostMapping(value = "/address")
-        public ResponseEntity<Object> addAddress(@RequestBody AddressRequest AddressRequest){
-
-
-            Map<String , Object> results = new LinkedHashMap<>();
-            results.put("status" , HttpStatus.CREATED.value());
-            results.put("message" , "create user successful");
-            results.put("data", userService.save(AddressRequest));
-            return new ResponseEntity<>(results , HttpStatus.OK);
-
-        }
-
-        @GetMapping(value = "/address/{userid}")
-        public ResponseEntity<Object>  getListAddress(@PathVariable long userid ){
-
-            Map<String , Object> results = new LinkedHashMap<>();
-            results.put("status" , HttpStatus.CREATED.value());
-            results.put("message" , "create user successful");
-            results.put("data", userService.getListAddress(userid));
-            return  new ResponseEntity<>(results , HttpStatus.OK) ;
-        }
 }
 

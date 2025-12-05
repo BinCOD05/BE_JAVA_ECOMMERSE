@@ -1,9 +1,13 @@
 package vn.web.Controller.Request;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import vn.web.Common.AddressType;
+import vn.web.Model.UserEntity;
 
 import java.io.Serializable;
 
@@ -13,11 +17,22 @@ import java.io.Serializable;
 @Setter
 public class AddressRequest implements Serializable {
 
-    @NotBlank
-    private Long userid ;
+    private String recipient ;
+
+    private String phone ;
+
     private String ward ;
-    private String street ;
-    private String number ;
-    private String country ;
-    private AddressType addressType ;
+
+    private String city ;
+
+    private String line1 ;
+
+    private String line2 ;
+
+    private String district;
+
+    private AddressType  addressType ;
+
+    private boolean  defaultAddress ;
+
 }

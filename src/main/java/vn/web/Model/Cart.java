@@ -1,17 +1,18 @@
 package vn.web.Model;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.Set;
+
 
 @Entity
-@Table(name = "user_role")
+@Table(name = "cart")
 @Getter
 @Setter
-public class UserRole extends AbstractEntity implements Serializable {
+public class Cart extends  AbstractEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +23,7 @@ public class UserRole extends AbstractEntity implements Serializable {
     @JoinColumn(name = "user_id")
     private UserEntity user ;
 
-    @ManyToOne
-    @JoinColumn(name = "role_id")
-    private Role role ;
+    @OneToMany(mappedBy = "cart" , fetch = FetchType.LAZY)
+    private Set<CartItem> cartItemSet;
 
 }

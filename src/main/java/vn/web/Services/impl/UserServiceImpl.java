@@ -4,16 +4,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.web.Controller.Request.AddressRequest;
-import vn.web.Controller.Request.UserChangePasswdRequest;
-import vn.web.Controller.Request.UserCreationRequest;
-import vn.web.Controller.Request.UserUpdateRequest;
+import vn.web.Controller.Request.*;
 import vn.web.Controller.Response.AddressResponse;
+import vn.web.Controller.Response.UserPageResponse;
 import vn.web.Controller.Response.UserResponse;
 import vn.web.Converter.UserMapper;
 import vn.web.Exception.ResourceNotFoundException;
@@ -22,6 +21,7 @@ import vn.web.Model.UserEntity;
 import vn.web.Repository.AddressRepository;
 import vn.web.Repository.UserRepository;
 import vn.web.Services.UserService;
+import vn.web.Util.UserSpecs;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +48,23 @@ public class UserServiceImpl  implements UserService {
     }
 
     @Override
+    public UserPageResponse findALl(UserPageRequest req , Pageable pageable) {
+        Specification<UserEntity> specs = UserSpecs.search(req);
+
+        Page<UserEntity> userPage  = userRepository.findAll(specs , pageable);
+
+        List<UserResponse> data = userPage.stream().map(user -> userMapper.toDTOResponse(user)).toList();
+
+        return UserPageResponse.builder()
+                .page(pageable.getPageNumber())
+                .totalElement(userPage.getTotalElements())
+                .size(userPage.getSize())
+                .totalPage(userPage.getTotalPages())
+                .content(data)
+                .build();
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public UserResponse save(UserCreationRequest req) {
 //        UserEntity user = modelMapper.map(req , UserEntity.class) ;
@@ -64,6 +81,7 @@ public class UserServiceImpl  implements UserService {
     @Transactional(rollbackFor = Exception.class)
     public UserResponse update(UserUpdateRequest req , long id) {
         UserEntity user = getUserEntity(id);
+//        updateUser hàm của interface UserMapper <-> MapperStruct
         userMapper.updateUser(user , req );
         return userMapper.toDTOResponse(userRepository.save(user));
     }
@@ -85,43 +103,6 @@ public class UserServiceImpl  implements UserService {
         userRepository.save(user);
     }
 
-    @Override
-    public Page<UserResponse> findAll(Pageable req) {
-        Page<UserEntity> listUsers = userRepository.findAll(req);
-
-
-
-
-        return null ;
-    }
-
-
-    @Override
-    public AddressResponse save(AddressRequest req) {
-//        List<AddressEntity> addresses = new ArrayList<>() ;
-//        UserEntity user = userRepository.findById(req.getUserid()).orElseThrow(()-> new RuntimeException("User not found"));
-//        AddressEntity addressEntity = modelMapper.map(req , AddressEntity.class);
-//        addressEntity.setUser(user);
-//        addressRepository.save(addressEntity);
-        return null ;
-    }
-
-    @Override
-    public AddressResponse getAddress() {
-        return null;
-    }
-
-    @Override
-    public List<AddressResponse> getListAddress(long userid) {
-//        UserEntity user = getUserEntity(userid);
-//        List<AddressEntity> listOfAddress = addressRepository.findByUserId(userid);
-//        List<AddressResponse> responses = new ArrayList<>();;
-//        listOfAddress.forEach( addressEntity ->  {
-//            responses.add(modelMapper.map(addressEntity , AddressResponse.class));
-//        });
-//        return responses ;
-        return null ;
-    }
 
 
     private UserEntity getUserEntity(long id) {
