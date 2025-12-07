@@ -8,15 +8,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import vn.web.Controller.Request.UserChangePasswdRequest;
-import vn.web.Controller.Request.UserCreationRequest;
-import vn.web.Controller.Request.UserPageRequest;
-import vn.web.Controller.Request.UserUpdateRequest;
+import vn.web.Common.RoleType;
+import vn.web.Controller.Request.*;
 import vn.web.Controller.Response.ApiResponse;
-import vn.web.Controller.Response.UserPageResponse;
+import vn.web.Controller.Response.PageResponse;
 import vn.web.Controller.Response.UserResponse;
+import vn.web.Model.Role;
 import vn.web.Services.UserService;
 import vn.web.Util.SecurityUtils;
 
@@ -28,7 +26,7 @@ public class UserController {
 
     @Operation(summary = "Get profile" , tags = "Get Profile User")
     @GetMapping(value = "/me")
-    @PreAuthorize("hasAuthority('user')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<UserResponse> getProfile(){
         long currentId  = SecurityUtils.getCurrentId();
         System.out.println(currentId);
@@ -41,7 +39,7 @@ public class UserController {
 
 
     @GetMapping(value = "/{id}")
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<UserResponse> getUser(@PathVariable long id ){
         return ApiResponse.<UserResponse>builder()
                 .status(HttpStatus.OK.value())
@@ -52,7 +50,7 @@ public class UserController {
 
     @Operation(summary = "create user by admin")
     @PostMapping
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<UserResponse> createUser(@RequestBody UserCreationRequest request){
         return ApiResponse.<UserResponse>builder()
                 .status(HttpStatus.CREATED.value())
@@ -95,13 +93,21 @@ public class UserController {
     }
 // Lấy danh sách user/search theo keyword
     @PostMapping(value = "/search")
-    public ApiResponse<UserPageResponse> findAll(@ModelAttribute UserPageRequest request,
-                                                 @PageableDefault(size = 10 , sort = "createdAt" , direction = Sort.Direction.ASC)Pageable pageable){
-        return ApiResponse.<UserPageResponse>builder()
+    public ApiResponse<PageResponse<UserResponse>> findAll(@ModelAttribute UserPageRequest request,
+                                             @PageableDefault(size = 10 , sort = "createdAt" , direction = Sort.Direction.ASC)Pageable pageable){
+        return ApiResponse.<PageResponse<UserResponse>>builder()
                 .status(HttpStatus.OK.value())
                 .result(userService.findALl(request , pageable))
                 .message("find user successful")
                 .build();
+    }
+
+
+    @PutMapping(value = "/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ApiResponse<UserResponse> updateRole(@RequestBody RoleChangeRequest request , @PathVariable Long id){
+        userService.changeRole(request.getRoleType() , id);
+        return null ;
     }
 
 }

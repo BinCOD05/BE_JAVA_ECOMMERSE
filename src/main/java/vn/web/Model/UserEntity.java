@@ -13,6 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import vn.web.Common.Gender;
+import vn.web.Common.RoleType;
 import vn.web.Common.UserStatus;
 
 import java.io.Serializable;
@@ -61,8 +62,9 @@ public class UserEntity extends AbstractEntity implements UserDetails, Serializa
     @OneToMany(mappedBy = "user" , fetch = FetchType.LAZY)
     private List<AddressEntity> addressEntityList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user"  , fetch = FetchType.EAGER)
-    private Set<UserRole> userRoleSet = new HashSet<>();
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles" , joinColumns = @JoinColumn(name = "user_id") , inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> rolesSet = new HashSet<>();
 
 //    @OneToMany(mappedBy = "user" , fetch = FetchType.LAZY)
 //    private Set<Cart> cartSet ;
@@ -72,11 +74,13 @@ public class UserEntity extends AbstractEntity implements UserDetails, Serializa
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-
-        List<Role> roleList = userRoleSet.stream().map(UserRole::getRole).toList();
-
-        List<String> roleNames = roleList.stream().map(Role::getName).toList();
-
+//        Trường hợp k dùng many to many
+//        List<Role> roleList = userRoleSet.stream().map(UserRole::getRole).toList();
+//
+//        List<String> roleNames = roleList.stream().map( role -> role.getName().toString()).toList();
+//
+//        return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
+        List<String> roleNames = rolesSet.stream().map( role ->  role.getName().toString()).toList();
         return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
     }
 }

@@ -18,8 +18,9 @@ public class UserSpecs {
 
                 String key = "%" + request.getKeyword().trim().toLowerCase() + "%";
                 Predicate hasName = cb.like(cb.lower(root.get("fullName")), key);
+                Predicate hasUsername = cb.like(cb.lower(root.get("username")) , key);
                 Predicate hasEmail = cb.like(cb.lower(root.get("email")), key);
-                predicates.add(cb.or(hasName, hasEmail));
+                predicates.add(cb.or(hasName, hasEmail , hasUsername));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

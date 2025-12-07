@@ -4,6 +4,7 @@ package vn.web.Model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import vn.web.Common.RoleType;
 
 import java.io.Serializable;
 import java.util.Set;
@@ -20,11 +21,13 @@ public class Role extends AbstractEntity implements Serializable {
     private Integer id ;
 
     @Column(name = "name")
-    private String name ;
+    @Enumerated(EnumType.STRING)
+    private RoleType name ;
 
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "role")
-    private Set<UserRole> userRoleSet ;
+    @ManyToMany
+    @JoinTable(name = "user_roles" , joinColumns = @JoinColumn(name = "role_id") , inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<UserEntity> userSet ;
 }

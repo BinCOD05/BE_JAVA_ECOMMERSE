@@ -1,5 +1,5 @@
 package vn.web.Common;
 
-public enum Role {
+public enum RoleType {
     OWNER , ADMIN , USER
 }

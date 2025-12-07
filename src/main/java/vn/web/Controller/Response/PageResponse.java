@@ -10,11 +10,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserPageResponse implements Serializable {
+public class PageResponse<T> implements Serializable {
     private Integer page ;
     private Integer size;
     private Integer totalPage ;
     private Long totalElement ;
-    List<UserResponse> content ;
+    List<T> content ;
 
 }

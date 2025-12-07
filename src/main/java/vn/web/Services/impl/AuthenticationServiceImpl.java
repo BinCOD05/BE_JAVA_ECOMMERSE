@@ -47,9 +47,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new RuntimeException("user not found");
         }
 
-
-
-
         String accessToken = jwtService.generateAccessToken(user.get().getId() , req.getUsername(), authorities );
         String refreshToken = jwtService.generateAccessToken(user.get().getId() , req.getUsername(), authorities );
         return TokenResponse.builder()
