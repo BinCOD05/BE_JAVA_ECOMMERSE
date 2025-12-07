@@ -13,5 +13,4 @@ import java.io.Serializable;
 
 public class UserPageRequest implements Serializable {
     private String keyword ;
-
 }

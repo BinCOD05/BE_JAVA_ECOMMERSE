@@ -1,13 +1,16 @@
 package vn.web.Services;
 
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import vn.web.Controller.Request.ProductCreationRequest;
-import vn.web.Controller.Request.ProductFilterRequest;
+import vn.web.Controller.Request.ProductFilterSearch;
 import vn.web.Controller.Response.PageResponse;
 import vn.web.Controller.Response.ProductDetailResponse;
-
-import java.util.List;
+import vn.web.Controller.Response.ProductSummaryResponse;
 
 public interface ProductService {
    ProductDetailResponse createProduct(ProductCreationRequest req);
+
+   ProductDetailResponse getProductDetail(long id) ;
+
+   PageResponse<ProductSummaryResponse> getProductList(ProductFilterSearch req , Pageable pageable);
 }

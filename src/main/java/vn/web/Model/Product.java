@@ -56,7 +56,7 @@ public class Product extends AbstractEntity implements Serializable {
 
 
     @OneToOne(mappedBy = "product" )
-    private Inventory inventories;
+    private Inventory inventory;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

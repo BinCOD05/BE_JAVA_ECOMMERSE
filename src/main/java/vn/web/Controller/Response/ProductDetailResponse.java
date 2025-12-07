@@ -7,6 +7,7 @@ import lombok.*;
 import vn.web.Model.Product;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +23,7 @@ public class ProductDetailResponse implements Serializable {
     private String description;
     private String  color ;
     private String storage ;
-
+    private BigDecimal price;
     private Set<ProductImage> images;
     private Set<ProductSpec> specs;
 

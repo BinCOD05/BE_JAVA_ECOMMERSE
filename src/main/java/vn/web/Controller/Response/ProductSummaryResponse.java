@@ -3,6 +3,7 @@ package vn.web.Controller.Response;
 import lombok.*;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,10 +16,10 @@ import java.util.List;
 public class ProductSummaryResponse implements Serializable {
     private Long id ;
     private String name ;
-    private String brand ;
-    private String category;
+    private BigDecimal price ;
+    private String brandName ;
+    private String categoryName;
     private String  color ;
-    private String storage ;
     private String thumbnailUrl ;
     private int quantity ;
 }
