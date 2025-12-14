@@ -15,6 +15,7 @@ public class ProductSpec {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isTrue(root.get("active")));
 
             if(req.getKeyword() != null ){
                 String key =  "%" + req.getKeyword().toLowerCase().trim() + "%";

@@ -7,4 +7,5 @@ import java.util.List;
 public interface VoucherService {
     Voucher createVoucher(Voucher voucher);
     List<Voucher> getAllVouchers();
+    public void deleteVoucher(Long id);
 }

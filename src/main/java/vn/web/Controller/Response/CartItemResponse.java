@@ -17,8 +17,8 @@ public class CartItemResponse implements Serializable {
     private String productImage;
     private String color ;
     private BigDecimal price;
-    private Integer quantity;
+    private Long quantity;
     private Boolean selected;
     // Hữu ích cho Frontend validate
-    private Integer maxStock;
+    private Long maxStock;
 }

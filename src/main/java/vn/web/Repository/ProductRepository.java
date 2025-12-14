@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.web.Model.Product;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,11 +20,11 @@ public interface ProductRepository extends JpaRepository<Product , Long>, JpaSpe
 
     @Query("SELECT p FROM Product p " + " LEFT JOIN FETCH p.brand " + " LEFT JOIN FETCH p.category "
             + "LEFT JOIN FETCH p.inventory"
-            + " WHERE p.id = :id")
+            + " WHERE p.id = :id AND p.active = true")
     Optional<Product> findByIdFullInfo(@Param("id") long id);
 
 
-//    Entity graph tự động fetch trước các data
+
     @Override
     @EntityGraph(attributePaths = {"brand", "category" , "inventory"})
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);

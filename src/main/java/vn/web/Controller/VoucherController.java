@@ -27,4 +27,14 @@ public class VoucherController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/admin/vouchers/{id}")
+    public ResponseEntity<?> deleteVoucher(@PathVariable Long id) {
+        try {
+            voucherService.deleteVoucher(id);
+            return ResponseEntity.ok("Đã xóa voucher thành công");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi xóa voucher: " + e.getMessage());
+        }
+    }
 }

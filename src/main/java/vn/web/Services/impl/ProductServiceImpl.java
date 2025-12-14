@@ -15,6 +15,7 @@ import vn.web.Controller.Response.PageResponse;
 import vn.web.Controller.Response.ProductDetailResponse;
 import vn.web.Controller.Response.ProductSummaryResponse;
 import vn.web.Converter.ProductMapper;
+import vn.web.Exception.ResourceNotFoundException;
 import vn.web.Model.*;
 import vn.web.Repository.BrandRepository;
 import vn.web.Repository.CategoryRepository;
@@ -126,9 +127,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @Transactional
-    public void deleteProduct(long id) {
-        Product product = productRepository.findByIdFullInfo(id).orElseThrow( () -> new RuntimeException("product not found"));
-        productRepository.delete(product);
+    public void deleteProduct(long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        product.setActive(false);
+
+        productRepository.save(product);
     }
 }

@@ -1,19 +1,44 @@
 package vn.web.Converter;
 
-
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 import vn.web.Controller.Response.CartItemResponse;
 import vn.web.Model.CartItem;
+import vn.web.Model.ProductImage;
 
-@Mapper(componentModel = "spring")
-public interface CartItemMapper {
+import java.util.Comparator;
+import java.util.Set;
 
-        @Mapping(source = "product.color" , target = "color")
-        @Mapping(source = "product.price" , target = "price")
-//        @Mapping(source = "product.productImages.imageUrl" , target = "productImage")
-        @Mapping(source = "selected" , target = "selected")
-        @Mapping(source = "product.name" , target = "productName")
-        @Mapping(source = "product.id" , target = "productId")
-        CartItemResponse toDTOResponse(CartItem cartItem);
+@Component
+public class CartItemMapper {
+
+        public CartItemResponse toDTOResponse(CartItem cartItem) {
+                CartItemResponse response = new CartItemResponse();
+
+                response.setId(cartItem.getId());
+                response.setProductId(cartItem.getProduct().getId());
+                response.setProductName(cartItem.getProduct().getName());
+                response.setColor(cartItem.getProduct().getColor()); // Nếu có
+                response.setPrice(cartItem.getProduct().getPrice());
+                response.setQuantity(cartItem.getQuantity());
+                response.setSelected(cartItem.getSelected());
+
+                // --- ĐOẠN LOGIC LẤY ẢNH ---
+                Set<ProductImage> images = cartItem.getProduct().getProductImages();
+                if (images != null && !images.isEmpty()) {
+                        String firstImage = images.stream()
+                                .findFirst()
+                                .map(ProductImage::getImageUrl) // Giả sử getter là getImageUrl
+                                .orElse(null);
+
+                        response.setProductImage(firstImage);
+                }
+                // ---------------------------
+
+                // Set max stock để frontend validation (nếu cần)
+                if (cartItem.getProduct().getInventory() != null) {
+                        response.setMaxStock(cartItem.getProduct().getInventory().getQuantity());
+                }
+
+                return response;
+        }
 }

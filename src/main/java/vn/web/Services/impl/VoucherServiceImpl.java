@@ -27,4 +27,14 @@ public class VoucherServiceImpl implements VoucherService {
     public List<Voucher> getAllVouchers() {
         return voucherRepository.findAll();
     }
+
+    // VoucherServiceImpl.java
+    @Override
+    public void deleteVoucher(Long id) {
+        if (voucherRepository.existsById(id)) {
+            voucherRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Voucher không tồn tại");
+        }
+    }
 }

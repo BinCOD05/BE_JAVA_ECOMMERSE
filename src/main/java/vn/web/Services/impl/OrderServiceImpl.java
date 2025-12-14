@@ -31,69 +31,86 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
     private final VoucherRepository voucherRepository;
 
-        @Override
-        @Transactional
-        public OrderResponse createOrder(OrderRequest req) {
-            UserEntity currentUser = SecurityUtils.getCurrentUser() ;
-            UserEntity user = userRepository.getReferenceById(currentUser.getId());
-            AddressEntity address = addressRepository.findByIdAndUserId(req.getAddressId() , currentUser.getId()).orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
-            Order order = new Order() ;
+    @Override
+    @Transactional
+    public OrderResponse createOrder(OrderRequest req) {
+        UserEntity currentUser = SecurityUtils.getCurrentUser();
+        UserEntity user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
 
-            order.setName(user.getFullName());
-            order.setUser(user);
-            order.setPhoneNumber(user.getPhone());
-            order.setNote(req.getNote());
-            order.setShipCity(address.getCity());
-            order.setShipDistrict(address.getDistrict());
-            order.setStatus(OrderStatus.PENDING);
-            List<CartItem> cartItems = cartItemRepository.findAllById(req.getCartItemIds());
+        AddressEntity address = addressRepository.findByIdAndUserId(req.getAddressId(), currentUser.getId())
+                .orElseThrow(() -> new RuntimeException("Địa chỉ không hợp lệ"));
 
-            if(cartItems.isEmpty()){
-                throw  new RuntimeException("Không có sản phẩm nào trong giỏ hàng");
-            }
+        Order order = new Order();
+        order.setName(user.getFullName());
+        order.setUser(user);
+        order.setPhoneNumber(user.getPhone());
+        order.setNote(req.getNote());
+        order.setShipCity(address.getCity());
+        order.setShipDistrict(address.getDistrict());
+        order.setStatus(OrderStatus.PENDING);
+        order.setOrderDate(LocalDateTime.now());
 
-            List<OrderItem> orderItems = new ArrayList<>();
-
-            BigDecimal totalPrice = BigDecimal.ZERO;
-
-            for (CartItem cartItem : cartItems){
-                OrderItem orderItem = new OrderItem() ;
-                Product product  = cartItem.getProduct();
-
-                orderItem.setQuantity(cartItem.getQuantity());
-                orderItem.setProduct(product);
-                orderItem.setOrder(order);
-                orderItem.setPrice(product.getPrice());
-                BigDecimal currentPrice = product.getPrice();
-
-                BigDecimal quantity = BigDecimal.valueOf(cartItem.getQuantity());
-
-                totalPrice = totalPrice.add(currentPrice.multiply(quantity));
-                orderItems.add(orderItem);
-            }
-            if (req.getVoucherCode() != null && !req.getVoucherCode().trim().isEmpty()) {
-                Voucher voucher = voucherRepository.findByCode(req.getVoucherCode())
-                        .orElseThrow(() -> new RuntimeException("Mã giảm giá không tồn tại"));
-                if (voucher.getQuantity() <= 0 || LocalDateTime.now().isAfter(voucher.getExpirationDate())) {
-                    throw new RuntimeException("Mã giảm giá đã hết hạn hoặc hết lượt dùng");
-                }
-
-                totalPrice = totalPrice.subtract(voucher.getDiscountAmount());
-                if (totalPrice.compareTo(BigDecimal.ZERO) < 0) {
-                    totalPrice = BigDecimal.ZERO;
-                }
-
-                voucher.setQuantity(voucher.getQuantity() - 1);
-                voucherRepository.save(voucher);
-            }
-            order.setTotalPrice(totalPrice);
-            order.setOrderItems(orderItems);
-
-            Order savedOrder = orderRepository.save(order);
-            cartItemRepository.deleteAll(cartItems);
-
-            return orderMapper.toDTOResponse(savedOrder);
+        List<CartItem> cartItems = cartItemRepository.findAllById(req.getCartItemIds());
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("Giỏ hàng trống hoặc sản phẩm không hợp lệ");
         }
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (CartItem cartItem : cartItems) {
+            Product product = cartItem.getProduct();
+            Inventory inventory = product.getInventory();
+
+            if (inventory == null) {
+                throw new RuntimeException("Sản phẩm " + product.getName() + " chưa được thiết lập kho hàng!");
+            }
+
+            long currentStock = inventory.getQuantity() != null ? inventory.getQuantity() : 0L;
+            long quantityToBuy = cartItem.getQuantity();
+
+            if (currentStock < quantityToBuy) {
+                throw new RuntimeException("Sản phẩm " + product.getName() + " không đủ hàng (Còn: " + currentStock + ")");
+            }
+
+            inventory.setQuantity(currentStock - quantityToBuy);
+            OrderItem orderItem = new OrderItem();
+            orderItem.setQuantity((long) quantityToBuy);
+            orderItem.setProduct(product);
+            orderItem.setOrder(order);
+            orderItem.setPrice(product.getPrice());
+
+            BigDecimal itemTotal = product.getPrice().multiply(BigDecimal.valueOf(quantityToBuy));
+            totalPrice = totalPrice.add(itemTotal);
+
+            orderItems.add(orderItem);
+        }
+
+        if (req.getVoucherCode() != null && !req.getVoucherCode().trim().isEmpty()) {
+            Voucher voucher = voucherRepository.findByCode(req.getVoucherCode())
+                    .orElseThrow(() -> new RuntimeException("Mã giảm giá không đúng"));
+
+            if (voucher.getQuantity() <= 0 || (voucher.getExpirationDate() != null && LocalDateTime.now().isAfter(voucher.getExpirationDate()))) {
+                throw new RuntimeException("Mã giảm giá đã hết hạn hoặc hết lượt dùng");
+            }
+
+            totalPrice = totalPrice.subtract(voucher.getDiscountAmount());
+            if (totalPrice.compareTo(BigDecimal.ZERO) < 0) totalPrice = BigDecimal.ZERO;
+
+            voucher.setQuantity(voucher.getQuantity() - 1);
+            voucherRepository.save(voucher);
+        }
+
+        order.setTotalPrice(totalPrice);
+        order.setOrderItems(orderItems);
+        Order savedOrder = orderRepository.save(order);
+
+        cartItemRepository.deleteAll(cartItems);
+
+        return orderMapper.toDTOResponse(savedOrder);
+    }
+
+
 
     @Override
     public List<OrderResponse> getMyOrders() {
@@ -136,9 +153,24 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
         try {
-            OrderStatus statusEnum = OrderStatus.valueOf(newStatus.toUpperCase());
-            order.setStatus(statusEnum);
-            if (statusEnum == OrderStatus.DELIVERED) {
+            OrderStatus newStatusEnum = OrderStatus.valueOf(newStatus.trim().toUpperCase());
+            OrderStatus oldStatus = order.getStatus();
+            if (newStatusEnum == oldStatus) {
+                return orderMapper.toDTOResponse(order);
+            }
+
+            if (newStatusEnum == OrderStatus.CANCELLED && oldStatus != OrderStatus.DELIVERED) {
+                for (OrderItem item : order.getOrderItems()) {
+                    Inventory inventory = item.getProduct().getInventory();
+
+                    if (inventory != null) {
+                        long currentStock = inventory.getQuantity() != null ? inventory.getQuantity() : 0L;
+                        inventory.setQuantity(currentStock + item.getQuantity());
+                    }
+                }
+            }
+
+            if (newStatusEnum == OrderStatus.DELIVERED) {
                 LocalDateTime activationDate = LocalDateTime.now();
 
                 for (OrderItem item : order.getOrderItems()) {
@@ -147,19 +179,20 @@ public class OrderServiceImpl implements OrderService {
                             : 12;
 
                     LocalDateTime expireDate = activationDate.plusMonths(months);
-
                     item.setWarrantyEndDate(expireDate);
-                    // Lúc này IMEI phải được Admin nhập trước roiiiiiii
                 }
                 orderItemRepository.saveAll(order.getOrderItems());
             }
+
+            order.setStatus(newStatusEnum);
             Order updatedOrder = orderRepository.save(order);
+
             return orderMapper.toDTOResponse(updatedOrder);
+
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Trạng thái không hợp lệ");
+            throw new RuntimeException("Trạng thái không hợp lệ: " + newStatus);
         }
     }
-
 
 
 

@@ -40,7 +40,7 @@ public class Product extends AbstractEntity implements Serializable {
     private String description ;
 
     @Column(name = "is_active")
-    private Boolean isActive ;
+    private Boolean active = true;
 
     @OneToMany(mappedBy = "product")
     private Set<CartItem> cartItemSet;
@@ -87,5 +87,6 @@ public class Product extends AbstractEntity implements Serializable {
             }
         }
     }
+
 
 }

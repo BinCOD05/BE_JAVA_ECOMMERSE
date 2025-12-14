@@ -1,5 +1,5 @@
 package vn.web.Common;
 
 public enum OrderStatus {
-    PENDING , CONFIRMED , SHIPPING , DELIVERED , CANCELED
+    PENDING , CONFIRMED , SHIPPING , DELIVERED , CANCELLED
 }
