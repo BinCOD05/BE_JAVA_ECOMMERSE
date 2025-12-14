@@ -18,11 +18,13 @@ import java.util.Optional;
 public interface ProductRepository extends JpaRepository<Product , Long>, JpaSpecificationExecutor<Product> {
 
     @Query("SELECT p FROM Product p " + " LEFT JOIN FETCH p.brand " + " LEFT JOIN FETCH p.category "
+            + "LEFT JOIN FETCH p.inventory"
             + " WHERE p.id = :id")
     Optional<Product> findByIdFullInfo(@Param("id") long id);
 
 
+//    Entity graph tự động fetch trước các data
     @Override
-    @EntityGraph(attributePaths = {"brand", "category" , "inventory"}) // Tự động FETCH brand và category
+    @EntityGraph(attributePaths = {"brand", "category" , "inventory"})
     Page<Product> findAll(Specification<Product> spec, Pageable pageable);
 }

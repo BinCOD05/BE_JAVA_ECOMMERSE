@@ -19,7 +19,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import vn.web.Services.CustomUserDetailsService;
+
+import java.util.List;
 
 
 @Configuration
@@ -39,7 +44,8 @@ public class AppConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws  Exception{
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests( auth -> auth.requestMatchers("/auth/**").permitAll().anyRequest().authenticated())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests( auth -> auth.requestMatchers("/auth/**" , "/api/products/**").permitAll().anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(requestFilter , UsernamePasswordAuthenticationFilter.class)
                 ;
@@ -76,4 +82,25 @@ public class AppConfig {
         return new BCryptPasswordEncoder();
     }
 
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 1. Cho phép Frontend (quan trọng nhất)
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        // 2. Cho phép các method
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS" , "PATCH"));
+
+        // 3. Cho phép các header (Authorization, Content-Type,...)
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // 4. Cho phép gửi cookie/credential (nếu có dùng)
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

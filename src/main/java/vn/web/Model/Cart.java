@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -17,13 +18,16 @@ public class Cart extends  AbstractEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer id ;
+    private Long id ;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "user_id")
     private UserEntity user ;
 
-    @OneToMany(mappedBy = "cart" , fetch = FetchType.LAZY)
-    private Set<CartItem> cartItemSet;
+    @OneToMany(mappedBy = "cart" , fetch = FetchType.LAZY , cascade = CascadeType.ALL , orphanRemoval = true)
+    private Set<CartItem> cartItemSet = new HashSet<>();
+
+    @Column(name = "status")
+    private String status ;
 
 }

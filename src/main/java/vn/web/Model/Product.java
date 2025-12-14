@@ -55,7 +55,7 @@ public class Product extends AbstractEntity implements Serializable {
     private Set<ProductSpecs> productSpecs = new HashSet<>();
 
 
-    @OneToOne(mappedBy = "product" )
+    @OneToOne(mappedBy = "product" , cascade = CascadeType.ALL , orphanRemoval = true)
     private Inventory inventory;
 
     @ManyToOne
@@ -66,6 +66,9 @@ public class Product extends AbstractEntity implements Serializable {
     @JoinColumn(name = "brand_id")
     private Brand brand;
 
+
+    @Column(name = "warranty_period")
+    private Integer warrantyPeriod;
 
     public void setProductImages(Set<ProductImage> productImages){
         this.productImages = productImages;

@@ -3,6 +3,7 @@ package vn.web.Model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
+import org.aspectj.weaver.ast.Or;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -65,6 +66,12 @@ public class UserEntity extends AbstractEntity implements UserDetails, Serializa
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles" , joinColumns = @JoinColumn(name = "user_id") , inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> rolesSet = new HashSet<>();
+
+    @OneToOne(mappedBy = "user" ,  cascade = CascadeType.ALL , orphanRemoval = true)
+    private Cart cart ;
+
+    @OneToMany(mappedBy = "user")
+    private List<Order> orders = new ArrayList<>();
 
 //    @OneToMany(mappedBy = "user" , fetch = FetchType.LAZY)
 //    private Set<Cart> cartSet ;

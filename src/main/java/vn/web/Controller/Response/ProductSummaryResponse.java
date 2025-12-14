@@ -21,5 +21,5 @@ public class ProductSummaryResponse implements Serializable {
     private String categoryName;
     private String  color ;
     private String thumbnailUrl ;
-    private int quantity ;
+    private Long stock ;
 }

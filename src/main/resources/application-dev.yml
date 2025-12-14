@@ -38,7 +38,7 @@ openapi:
     title: Binh Dep Trai Trum Backend
     version: 1.0.0
 jwt:
-  expiryMinute: 1
+  expiryMinute: 30
   expiryDay: 14
   accessKey: SbeFezwgfO+DoUuCEHBUxNQaQOeRBj4dje0VEBd2P/k=
   refreshKey: gdkIKUlNpRGqFo+VMfbH2Ebkik0G99lb1ywmIRYdV58=

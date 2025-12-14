@@ -25,6 +25,7 @@ public class ProductCreationRequest implements Serializable {
     private Long categoryId;
     private List<ProductSpecReqDTO> specs;
     private List<ProductImageReqDTO> images;
+    private Long stock  ;
     @Data
     public static class ProductSpecReqDTO {
         private String name;
@@ -32,8 +33,7 @@ public class ProductCreationRequest implements Serializable {
     }
     @Data
     public static class ProductImageReqDTO {
-        private String imageUrl;
-        private Boolean isPrimary;
+        private Boolean primary;
         private Integer sortOrder;
     }
 }

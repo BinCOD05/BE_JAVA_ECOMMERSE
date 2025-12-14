@@ -26,7 +26,6 @@ public class UserController {
 
     @Operation(summary = "Get profile" , tags = "Get Profile User")
     @GetMapping(value = "/me")
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<UserResponse> getProfile(){
         long currentId  = SecurityUtils.getCurrentId();
         System.out.println(currentId);
@@ -50,7 +49,6 @@ public class UserController {
 
     @Operation(summary = "create user by admin")
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
     public ApiResponse<UserResponse> createUser(@RequestBody UserCreationRequest request){
         return ApiResponse.<UserResponse>builder()
                 .status(HttpStatus.CREATED.value())
@@ -62,7 +60,6 @@ public class UserController {
 
     @Operation(summary = "update user info" , tags = "update user" , description = "cập nhật thông tin user")
     @PutMapping(value = "/upd")
-    @PreAuthorize("hasAuthority('user')")
     public ApiResponse<UserResponse> updateUser(@RequestBody UserUpdateRequest request){
         long currentId = SecurityUtils.getCurrentId();
         return ApiResponse.<UserResponse>builder()

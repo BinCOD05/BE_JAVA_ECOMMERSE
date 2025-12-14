@@ -27,7 +27,7 @@ public class ProductDetailResponse implements Serializable {
     private Set<ProductImage> images;
     private Set<ProductSpec> specs;
 
-    private int stockQuantity ;
+    private Long stock ;
 
     private CategoryResponse category ;
     private BrandResponse brand ;

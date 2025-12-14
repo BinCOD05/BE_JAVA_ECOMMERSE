@@ -6,7 +6,10 @@ spring:
     name: backend-service
   profiles:
     active: dev
-
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 management:
   endpoints:
     web:
@@ -18,3 +21,4 @@ logging:
     root: INFO
     web: INFO
 
+# Cấu hình giới hạn dung lượng file upload

@@ -49,7 +49,10 @@ public class UserServiceImpl  implements UserService {
     public UserResponse getUser(long id) {
         UserEntity user = getUserEntity(id);
 //        return modelMapper.map(user , UserResponse.class);
-        return userMapper.toDTOResponse(user) ;
+        Set<RoleType> roleTypes = user.getRolesSet().stream().map(role -> role.getName()).collect(Collectors.toSet());
+        UserResponse response  = userMapper.toDTOResponse(user) ;
+        response.setRoleTypes(roleTypes);
+        return response;
     }
 
     @Override
