@@ -1,5 +1,6 @@
 package vn.web.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,8 +27,7 @@ public class Category implements Serializable {
     private Category parent;
 
     @OneToMany(mappedBy = "parent" , cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Category> children = new ArrayList<>();
 
-    @OneToMany(mappedBy = "category")
-    private List<Product> products;
 }

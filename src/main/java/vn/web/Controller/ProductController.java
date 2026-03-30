@@ -33,7 +33,7 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "get list products" ,tags = "get products" , description = "Lấy danh sách sản phẩm có lọc")
-    public ApiResponse<PageResponse<ProductSummaryResponse>> getProducts(@ModelAttribute ProductFilterSearch request , @PageableDefault(size = 10 , direction = Sort.Direction.ASC ) Pageable pageable){
+    public ApiResponse<PageResponse<ProductSummaryResponse>> getProducts(@ModelAttribute ProductFilterSearch request , @PageableDefault(size = 30 , direction = Sort.Direction.ASC ) Pageable pageable){
         return ApiResponse.<PageResponse<ProductSummaryResponse>>builder()
                 .result(productService.getProductList(request , pageable))
                 .build();

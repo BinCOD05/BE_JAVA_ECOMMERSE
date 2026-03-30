@@ -26,6 +26,7 @@ public class UserController {
 
     @Operation(summary = "Get profile" , tags = "Get Profile User")
     @GetMapping(value = "/me")
+//    @PreAuthorize("hasAuthority('OWNER')")
     public ApiResponse<UserResponse> getProfile(){
         long currentId  = SecurityUtils.getCurrentId();
         System.out.println(currentId);

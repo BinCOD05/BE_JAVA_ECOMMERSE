@@ -42,37 +42,52 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductDetailResponse createProduct(ProductCreationRequest req , List<MultipartFile> files) {
+    public ProductDetailResponse createProduct(ProductCreationRequest req, List<MultipartFile> files) {
         Product product = productMapper.toEntity(req);
 
         Category realCategory = categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
-
         Brand realBrand = brandRepository.findById(req.getBrandId())
                 .orElseThrow(() -> new RuntimeException("Brand không tồn tại"));
 
+        product.setCategory(realCategory);
+        product.setBrand(realBrand);
 
-        if(files != null && !files.isEmpty() && req.getImages() != null ){
-            List<String> images = files.stream().map( multipartFile ->
-                cloudinaryService.upload(multipartFile) ).toList();
+        Inventory inventory = new Inventory();
+        inventory.setQuantity(req.getStock());
+        inventory.setProduct(product);
+        product.setInventory(inventory);
+
+        if (files != null && !files.isEmpty()) {
+            if (req.getImages() != null && files.size() != req.getImages().size()) {
+                throw new RuntimeException(" Số lượng file ảnh và thông tin mô tả ảnh không khớp!");
+            }
 
             Set<ProductImage> productImageSet = new HashSet<>();
 
-            for (int i = 0 ; i < images.size() ; i ++){
-                ProductImage image = new ProductImage() ;
-                image.setImageUrl(images.get(i));
+            for (int i = 0; i < files.size(); i++) {
+                MultipartFile file = files.get(i);
+                String uploadedUrl = cloudinaryService.upload(file);
+                ProductImage image = new ProductImage();
+                image.setImageUrl(uploadedUrl);
+                image.setProduct(product);
+
+                if (req.getImages() != null) {
+                    ProductCreationRequest.ProductImageReqDTO meta = req.getImages().get(i);
+                    image.setPrimary(meta.getPrimary());
+                    image.setSortOrder(meta.getSortOrder());
+                } else {
+                    image.setPrimary(i == 0);
+                    image.setSortOrder(i);
+                }
+
                 productImageSet.add(image);
             }
             product.setProductImages(productImageSet);
         }
 
-        Inventory inventory = new Inventory() ;
-        product.setCategory(realCategory);
-        product.setBrand(realBrand);
-        inventory.setQuantity(req.getStock());
-        inventory.setProduct(product);
-        product.setInventory(inventory);
         Product productSaved = productRepository.save(product);
+
         return productMapper.toDTOResponse(productSaved);
     }
 
@@ -99,6 +114,8 @@ public class ProductServiceImpl implements ProductService {
             response.setBrandName(product.getBrand().getName());
             response.setCategoryName(product.getCategory().getName());
             response.setColor(product.getColor());
+            response.setBrandId(product.getBrand().getId());
+            response.setCategoryId(product.getCategory().getId());
             if(product.getInventory() != null ){ response.setStock(product.getInventory().getQuantity());};
             response.setThumbnailUrl(product.getProductImages().stream()
                     .filter(image -> Boolean.TRUE.equals(image.getPrimary()))
@@ -121,10 +138,17 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDetailResponse updateProduct(ProductUpdateRequest req, long id) {
-        Product product = productRepository.findByIdFullInfo(id).orElseThrow( () -> new RuntimeException("product not found"));
-        productMapper.updateProduct(product , req);
-        return  productMapper.toDTOResponse(productRepository.save(product));
+        Product product = productRepository.findByIdFullInfo(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        productMapper.updateProduct(product, req);
+
+        if (req.getStock() != null && product.getInventory() != null) {
+            product.getInventory().setQuantity(req.getStock());
+        }
+        return productMapper.toDTOResponse(productRepository.save(product));
     }
+
+
 
     @Override
     public void deleteProduct(long productId) {

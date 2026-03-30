@@ -45,7 +45,7 @@ public class AppConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws  Exception{
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests( auth -> auth.requestMatchers("/auth/**" , "/api/products/**").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests( auth -> auth.requestMatchers("/auth/**" , "/api/products/**" , "/api/categories" , "/api/brands").permitAll().anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(requestFilter , UsernamePasswordAuthenticationFilter.class)
                 ;

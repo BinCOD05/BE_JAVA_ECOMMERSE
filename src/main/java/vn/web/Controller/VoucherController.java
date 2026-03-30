@@ -24,7 +24,10 @@ public class VoucherController {
         try {
             return ResponseEntity.ok(voucherService.createVoucher(voucher));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+
+            String errorMsg = (e.getMessage() != null) ? e.getMessage() : e.toString();
+            return ResponseEntity.badRequest().body("Lỗi Server: " + errorMsg);
         }
     }
 

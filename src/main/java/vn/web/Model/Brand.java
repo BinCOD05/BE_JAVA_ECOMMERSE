@@ -20,7 +20,4 @@ public class Brand implements Serializable {
 
     @Column(name = "name")
     private String name ;
-
-    @OneToMany(mappedBy = "brand")
-    private Set<Product> productSet = new HashSet<>();
 }
