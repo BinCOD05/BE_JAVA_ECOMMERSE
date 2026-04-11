@@ -10,6 +10,11 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  datasource:
+    url: jdbc:mysql://${host.ip}:${host.port}/${mysql.db}
+    username: { mysql.user }
+    password: { mysql.pass }
+    driver-class-name: com.mysql.cj.jdbc.Driver
 management:
   endpoints:
     web:

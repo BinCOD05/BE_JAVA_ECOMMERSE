@@ -24,6 +24,14 @@ spring:
         name: binh
         password: 12345
         roles: USER
+# environment variables ;
+host:
+  ip: 'localhost'
+  port: '3306'
+mysql:
+  db: 'bindata'
+  user: 'app'
+  pass: '12345'
 
   # application-dev.yml
 springdoc:
