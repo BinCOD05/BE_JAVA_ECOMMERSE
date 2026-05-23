@@ -108,4 +108,9 @@ public class UserController {
         return null ;
     }
 
+    @GetMapping(value = "/test")
+    public String test(){
+        return "test du lieu qua api " ; 
+    }
+
 }
