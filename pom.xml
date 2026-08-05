@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>25</java.version>
+		<java.version>21</java.version>
 	</properties>
 
 
@@ -122,7 +122,11 @@
 			<artifactId>cloudinary-http44</artifactId>
 			<version>1.36.0</version>
 		</dependency>
-
+<!--		Spring Kafka (Spring Boot manages version automatically) -->
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>

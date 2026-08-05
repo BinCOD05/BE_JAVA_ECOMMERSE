@@ -48,9 +48,9 @@ public class AddressEntity extends AbstractEntity implements Serializable {
     @Column(name = "district")
     private String district;
 
-    @Column( name = "address_type")
+    @Column(name = "address_type", columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
-    private AddressType  addressType ;
+    private AddressType addressType;
 
     @Column(name = "is_default")
     private boolean defaultAddress ;

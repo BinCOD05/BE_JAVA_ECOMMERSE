@@ -20,7 +20,7 @@ public class Role extends AbstractEntity implements Serializable {
     @Column(name = "id")
     private Integer id ;
 
-    @Column(name = "name")
+    @Column(name = "name", columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
     private RoleType name ;
 

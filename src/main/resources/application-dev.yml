@@ -50,3 +50,8 @@ jwt:
   expiryDay: 14
   accessKey: SbeFezwgfO+DoUuCEHBUxNQaQOeRBj4dje0VEBd2P/k=
   refreshKey: gdkIKUlNpRGqFo+VMfbH2Ebkik0G99lb1ywmIRYdV58=
+
+cloudinary:
+  cloud-name: dqkfttwu4
+  api-key: 151963421813818
+  api-secret: P-sZYm_X3nVP_C7jZXi0TxwYSYE

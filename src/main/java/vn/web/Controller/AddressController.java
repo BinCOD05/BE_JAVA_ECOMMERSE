@@ -29,8 +29,7 @@ public class AddressController {
     @GetMapping
     public ApiResponse<List<AddressResponse>> getListAddress(){
         List<AddressResponse> result = addressService.getListAddress();
-        System.out.println(result);
-        return  ApiResponse.<List<AddressResponse>>builder()
+        return ApiResponse.<List<AddressResponse>>builder()
                 .status(HttpStatus.OK.value())
                 .message("get List of Address successful")
                 .result(result)

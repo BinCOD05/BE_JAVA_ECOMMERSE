@@ -10,7 +10,10 @@ import java.math.BigDecimal;
 public class OrderItemResponse {
     private Long id;
     private String productName;
-    private Integer quantity;
+    private Long quantity;
     private BigDecimal price;
     private String imei;
+
+    // Ảnh thumbnail của sản phẩm (ảnh primary)
+    private String productImage;
 }

@@ -1,7 +1,7 @@
 package vn.web.Services.impl;
 
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,35 +23,33 @@ import vn.web.Repository.ProductRepository;
 import vn.web.Services.ProductService;
 import vn.web.Util.ProductSpec;
 
-import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final CategoryRepository categoryRepository;
-    private  final BrandRepository brandRepository;
+    private final BrandRepository brandRepository;
     private final CloudinaryService cloudinaryService;
-
 
     @Override
     @Transactional
     public ProductDetailResponse createProduct(ProductCreationRequest req, List<MultipartFile> files) {
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category không tồn tại: " + req.getCategoryId()));
+        Brand brand = brandRepository.findById(req.getBrandId())
+                .orElseThrow(() -> new ResourceNotFoundException("Brand không tồn tại: " + req.getBrandId()));
+
         Product product = productMapper.toEntity(req);
-
-        Category realCategory = categoryRepository.findById(req.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Category không tồn tại"));
-        Brand realBrand = brandRepository.findById(req.getBrandId())
-                .orElseThrow(() -> new RuntimeException("Brand không tồn tại"));
-
-        product.setCategory(realCategory);
-        product.setBrand(realBrand);
+        product.setCategory(category);
+        product.setBrand(brand);
 
         Inventory inventory = new Inventory();
         inventory.setQuantity(req.getStock());
@@ -60,78 +58,72 @@ public class ProductServiceImpl implements ProductService {
 
         if (files != null && !files.isEmpty()) {
             if (req.getImages() != null && files.size() != req.getImages().size()) {
-                throw new RuntimeException(" Số lượng file ảnh và thông tin mô tả ảnh không khớp!");
+                throw new RuntimeException("Số file ảnh (" + files.size() + ") không khớp với metadata ảnh (" + req.getImages().size() + ")");
             }
 
-            Set<ProductImage> productImageSet = new HashSet<>();
-
+            Set<ProductImage> imageSet = new HashSet<>();
             for (int i = 0; i < files.size(); i++) {
-                MultipartFile file = files.get(i);
-                String uploadedUrl = cloudinaryService.upload(file);
-                ProductImage image = new ProductImage();
-                image.setImageUrl(uploadedUrl);
-                image.setProduct(product);
+                String url = cloudinaryService.upload(files.get(i));
+                ProductImage img = new ProductImage();
+                img.setImageUrl(url);
+                img.setProduct(product);
 
                 if (req.getImages() != null) {
                     ProductCreationRequest.ProductImageReqDTO meta = req.getImages().get(i);
-                    image.setPrimary(meta.getPrimary());
-                    image.setSortOrder(meta.getSortOrder());
+                    img.setPrimary(meta.getPrimary());
+                    img.setSortOrder(meta.getSortOrder());
                 } else {
-                    image.setPrimary(i == 0);
-                    image.setSortOrder(i);
+                    img.setPrimary(i == 0);
+                    img.setSortOrder(i);
                 }
-
-                productImageSet.add(image);
+                imageSet.add(img);
             }
-            product.setProductImages(productImageSet);
+            product.setProductImages(imageSet);
         }
 
-        Product productSaved = productRepository.save(product);
-
-        return productMapper.toDTOResponse(productSaved);
+        return productMapper.toDTOResponse(productRepository.save(product));
     }
 
     @Override
     public ProductDetailResponse getProductDetail(long id) {
-
-        Product product = productRepository.findByIdFullInfo(id).orElseThrow(() -> new RuntimeException("hihi"));
-
+        Product product = productRepository.findByIdFullInfo(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại: " + id));
         return productMapper.toDTOResponse(product);
     }
 
     @Override
     @Transactional
     public PageResponse<ProductSummaryResponse> getProductList(ProductFilterSearch req, Pageable pageable) {
-
         Specification<Product> spec = ProductSpec.search(req);
-        Page<Product> products = productRepository.findAll(spec , pageable);
+        Page<Product> page = productRepository.findAll(spec, pageable);
 
-        List<ProductSummaryResponse> list = products.stream().map(product -> {
-            ProductSummaryResponse response = new ProductSummaryResponse();
-            response.setId(product.getId());
-            response.setName(product.getName());
-            response.setPrice(product.getPrice());
-            response.setBrandName(product.getBrand().getName());
-            response.setCategoryName(product.getCategory().getName());
-            response.setColor(product.getColor());
-            response.setBrandId(product.getBrand().getId());
-            response.setCategoryId(product.getCategory().getId());
-            if(product.getInventory() != null ){ response.setStock(product.getInventory().getQuantity());};
-            response.setThumbnailUrl(product.getProductImages().stream()
-                    .filter(image -> Boolean.TRUE.equals(image.getPrimary()))
+        List<ProductSummaryResponse> content = page.stream().map(p -> {
+            ProductSummaryResponse dto = new ProductSummaryResponse();
+            dto.setId(p.getId());
+            dto.setName(p.getName());
+            dto.setPrice(p.getPrice());
+            dto.setColor(p.getColor());
+            dto.setBrandName(p.getBrand().getName());
+            dto.setBrandId(p.getBrand().getId());
+            dto.setCategoryName(p.getCategory().getName());
+            dto.setCategoryId(p.getCategory().getId());
+            if (p.getInventory() != null) {
+                dto.setStock(p.getInventory().getQuantity());
+            }
+            dto.setThumbnailUrl(p.getProductImages().stream()
+                    .filter(img -> Boolean.TRUE.equals(img.getPrimary()))
                     .findFirst()
                     .map(ProductImage::getImageUrl)
-                    .orElse(null)
-                    );
-            return  response;
-        }).toList();
+                    .orElse(null));
+            return dto;
+        }).collect(Collectors.toList());
 
         return PageResponse.<ProductSummaryResponse>builder()
                 .page(pageable.getPageNumber())
                 .size(pageable.getPageSize())
-                .totalElement(products.getTotalElements())
-                .totalPage(products.getTotalPages())
-                .content(list)
+                .totalElement(page.getTotalElements())
+                .totalPage(page.getTotalPages())
+                .content(content)
                 .build();
     }
 
@@ -139,24 +131,20 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductDetailResponse updateProduct(ProductUpdateRequest req, long id) {
         Product product = productRepository.findByIdFullInfo(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại: " + id));
         productMapper.updateProduct(product, req);
-
         if (req.getStock() != null && product.getInventory() != null) {
             product.getInventory().setQuantity(req.getStock());
         }
         return productMapper.toDTOResponse(productRepository.save(product));
     }
 
-
-
     @Override
-    public void deleteProduct(long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
+    @Transactional
+    public void deleteProduct(long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại: " + id));
         product.setActive(false);
-
         productRepository.save(product);
     }
 }

@@ -66,7 +66,6 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public List<AddressResponse> getListAddress() {
         long userId = SecurityUtils.getCurrentId();
-        System.out.println(addressRepository.findByUserId(userId));
         List<AddressResponse> results = addressRepository.findByUserId(userId).stream()
                 .map(addressEntity -> addressMapper.toDTOResponse(addressEntity))
                 .toList();

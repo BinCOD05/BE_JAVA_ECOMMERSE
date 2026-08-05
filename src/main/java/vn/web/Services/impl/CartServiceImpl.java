@@ -1,6 +1,7 @@
 package vn.web.Services.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.web.Controller.Request.AddCartRequest;
@@ -12,163 +13,157 @@ import vn.web.Model.*;
 import vn.web.Repository.CartItemRepository;
 import vn.web.Repository.CartRepository;
 import vn.web.Repository.ProductRepository;
-import vn.web.Repository.UserRepository;
 import vn.web.Services.CartService;
 import vn.web.Util.SecurityUtils;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
-
 
 @Service
 @RequiredArgsConstructor
-public class CartServiceImpl  implements CartService {
+@Slf4j
+public class CartServiceImpl implements CartService {
 
-    private final CartRepository cartRepository ;
+    private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository ;
-    private final UserRepository userRepository;
-    private  final CartItemMapper cartItemMapper;
+    private final ProductRepository productRepository;
+    private final CartItemMapper cartItemMapper;
 
     @Override
     @Transactional
     public Object addToCart(AddCartRequest req) {
+        UserEntity user = SecurityUtils.requireCurrentUser();
 
-        UserEntity  user = SecurityUtils.getCurrentUser();
-
-        Product product = productRepository.findByIdFullInfo(req.getProductId()).orElseThrow(() -> new ResourceNotFoundException("khong tim thay san pham "));
+        Product product = productRepository.findByIdFullInfo(req.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm: " + req.getProductId()));
 
         Inventory inventory = product.getInventory();
-        if(inventory == null ){
-            throw new RuntimeException("không có trong kho");
+        if (inventory == null) {
+            throw new RuntimeException("Sản phẩm chưa được thiết lập kho hàng");
         }
 
-        long stock = inventory.getQuantity() ;
-
-        if(stock < req.getQuantity()){
-            throw new RuntimeException("Không còn hàng");
+        long stock = inventory.getQuantity();
+        if (stock < req.getQuantity()) {
+            throw new RuntimeException("Sản phẩm không đủ số lượng (Còn: " + stock + ")");
         }
 
-        Cart cart = cartRepository.findByUserId(user.getId()).orElseGet(() ->{
-            Cart newCart = new Cart() ;
+        Cart cart = cartRepository.findByUserId(user.getId()).orElseGet(() -> {
+            Cart newCart = new Cart();
             newCart.setUser(user);
             return cartRepository.save(newCart);
         });
 
-        Optional<CartItem> existedProduct = cart.getCartItemSet().stream().filter(p -> p.getProduct().getId().equals(req.getProductId())).findFirst();
-        if(existedProduct.isPresent()){
-            CartItem existingItem = existedProduct.get();
+        Optional<CartItem> existing = cart.getCartItemSet().stream()
+                .filter(i -> i.getProduct().getId().equals(req.getProductId()))
+                .findFirst();
 
-            long newQuantity = existingItem.getQuantity() + req.getQuantity() ;
-            if(newQuantity > stock){
-                throw  new RuntimeException("khong du hang be oiii");
+        if (existing.isPresent()) {
+            CartItem item = existing.get();
+            long newQty = item.getQuantity() + req.getQuantity();
+            if (newQty > stock) {
+                throw new RuntimeException("Vượt quá số lượng tồn kho (Còn: " + stock + ")");
             }
-
-            existingItem.setQuantity(newQuantity);
-            cartItemRepository.save(existingItem);
-        }else {
-            CartItem cartItem = new CartItem() ;
-            cartItem.setCart(cart);
-            cartItem.setQuantity(req.getQuantity());
-            cartItem.setProduct(product);
-            cartItemRepository.save(cartItem);
+            item.setQuantity(newQty);
+            cartItemRepository.save(item);
+        } else {
+            CartItem item = new CartItem();
+            item.setCart(cart);
+            item.setQuantity(req.getQuantity());
+            item.setProduct(product);
+            cartItemRepository.save(item);
         }
-        return null ;
+
+        return null;
     }
 
     @Override
     @Transactional
     public CartResponse getCartList() {
-            UserEntity user = SecurityUtils.getCurrentUser();
-            Cart cart = cartRepository.findByUserId(user.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Giỏ hàng trống"));
+        UserEntity user = SecurityUtils.requireCurrentUser();
 
-            List<CartItemResponse> cartItemResponses = cart.getCartItemSet().stream()
-                    .map(cartItemMapper::toDTOResponse)
-                    .collect(Collectors.toList());
-
-//            BigDecimal totalPrice = cartItemResponses.stream()
-//                    .map(item -> {
-//                        return item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-//                    })
-//                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalPrice = cart.getCartItemSet().stream()
-                // [QUAN TRỌNG] Chỉ lọc những item nào đang được chọn
-                .filter(item -> Boolean.TRUE.equals(item.getSelected()))
-                .map(item -> {
-                    BigDecimal price = item.getProduct().getPrice();
-                    return price.multiply(BigDecimal.valueOf(item.getQuantity()));
-                })
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            CartResponse cartResponse = new CartResponse();
-            cartResponse.setId(cart.getId());
-            cartResponse.setCartItemResponses(cartItemResponses);
-            cartResponse.setTotalItems((long)cartItemResponses.size()); // size() trả về int/long tùy list
-            cartResponse.setTotalPrice(totalPrice);
-
-            return cartResponse;
+        Optional<Cart> cartOpt = cartRepository.findByUserId(user.getId());
+        if (cartOpt.isEmpty()) {
+            // Trả về giỏ hàng trống thay vì throw exception
+            return CartResponse.builder()
+                    .id(null)
+                    .totalItems(0L)
+                    .totalPrice(BigDecimal.ZERO)
+                    .cartItemResponses(Collections.emptyList())
+                    .build();
         }
 
+        Cart cart = cartOpt.get();
+        List<CartItemResponse> items = cart.getCartItemSet().stream()
+                .map(cartItemMapper::toDTOResponse)
+                .collect(Collectors.toList());
+
+        BigDecimal totalPrice = cart.getCartItemSet().stream()
+                .filter(i -> Boolean.TRUE.equals(i.getSelected()))
+                .map(i -> i.getProduct().getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return CartResponse.builder()
+                .id(cart.getId())
+                .totalItems((long) items.size())
+                .totalPrice(totalPrice)
+                .cartItemResponses(items)
+                .build();
+    }
 
     @Override
     @Transactional
     public CartResponse updateQuantity(Long quantity, Long itemId) {
-        CartItem cartItem = cartItemRepository.findById(itemId).orElseThrow( () -> new ResourceNotFoundException("khong tim thay san pham"));
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cart item: " + itemId));
 
-        Long currentId = SecurityUtils.getCurrentId() ;
-        if(!cartItem.getCart().getUser().getId().equals(currentId)){
-            throw  new RuntimeException("DUNG LAI NGAYY");
+        if (!item.getCart().getUser().getId().equals(SecurityUtils.getCurrentId())) {
+            throw new RuntimeException("Bạn không có quyền thay đổi item này");
         }
 
-        if(quantity < 0 ){
-            cartItemRepository.delete(cartItem);
+        if (quantity <= 0) {
+            cartItemRepository.delete(item);
             return getCartList();
         }
 
-        long stock = cartItem.getProduct().getInventory().getQuantity();
-
-        if(quantity > stock){
-            throw  new RuntimeException("khong duoc dau be oiii");
+        long stock = item.getProduct().getInventory().getQuantity();
+        if (quantity > stock) {
+            throw new RuntimeException("Không đủ hàng trong kho (Còn: " + stock + ")");
         }
 
-        cartItem.setQuantity(quantity);
-        cartItemRepository.save(cartItem);
+        item.setQuantity(quantity);
+        cartItemRepository.save(item);
         return getCartList();
     }
 
     @Override
     @Transactional
     public CartResponse selectCartItem(Boolean selected, Long itemId) {
-        CartItem cartItem = cartItemRepository.findById(itemId).orElseThrow(() -> new RuntimeException("khong tim thay"));
-        Long currentId = SecurityUtils.getCurrentId() ;
-        if(!cartItem.getCart().getUser().getId().equals(currentId)){
-            throw new RuntimeException("dung lai di");
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cart item: " + itemId));
+
+        if (!item.getCart().getUser().getId().equals(SecurityUtils.getCurrentId())) {
+            throw new RuntimeException("Bạn không có quyền thay đổi item này");
         }
-        cartItem.setSelected(selected);
-        cartItemRepository.save(cartItem);
+
+        item.setSelected(selected);
+        cartItemRepository.save(item);
         return getCartList();
     }
 
     @Override
     @Transactional
     public CartResponse delete(Long itemId) {
+        CartItem item = cartItemRepository.findById(itemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy cart item: " + itemId));
 
-        UserEntity user = SecurityUtils.getCurrentUser();
-
-        CartItem cartItem  = cartItemRepository.findById(itemId).orElseThrow(() -> new RuntimeException("khong tim thay san pham "));
-
-        if(!cartItem.getCart().getUser().getId().equals(user.getId())){
-            throw new RuntimeException("DUNG LAI DIIII");
+        if (!item.getCart().getUser().getId().equals(SecurityUtils.requireCurrentUser().getId())) {
+            throw new RuntimeException("Bạn không có quyền xóa item này");
         }
 
-        cartItemRepository.delete(cartItem);
-
+        cartItemRepository.delete(item);
         return getCartList();
     }
-
-
 }

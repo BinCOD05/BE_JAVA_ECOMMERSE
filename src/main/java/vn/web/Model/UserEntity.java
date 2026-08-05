@@ -52,11 +52,11 @@ public class UserEntity extends AbstractEntity implements UserDetails, Serializa
     @Column(name = "email")
     private String email;
 
-    @Column(name = "gender")
+    @Column(name = "gender", columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
-    private Gender gender  ;
+    private Gender gender;
 
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "VARCHAR(20)")
     @Enumerated(EnumType.STRING)
     private UserStatus status = UserStatus.ACTIVE;
 
@@ -88,6 +88,6 @@ public class UserEntity extends AbstractEntity implements UserDetails, Serializa
 //
 //        return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
         List<String> roleNames = rolesSet.stream().map( role ->  role.getName().toString()).toList();
-        return roleNames.stream().map(SimpleGrantedAuthority::new).toList();
+        return roleNames.stream().map(role -> new SimpleGrantedAuthority(role)).toList();
     }
 }

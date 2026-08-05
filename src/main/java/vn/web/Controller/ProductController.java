@@ -1,15 +1,13 @@
 package vn.web.Controller;
 
-
 import io.swagger.v3.oas.annotations.Operation;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vn.web.Controller.Request.ProductCreationRequest;
@@ -25,59 +23,68 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "/api/products")
+@RequestMapping("/api/products")
 public class ProductController {
 
     private final ProductService productService;
 
-
+    @Operation(summary = "Danh sách sản phẩm (public, có filter + phân trang)")
     @GetMapping
-    @Operation(summary = "get list products" ,tags = "get products" , description = "Lấy danh sách sản phẩm có lọc")
-    public ApiResponse<PageResponse<ProductSummaryResponse>> getProducts(@ModelAttribute ProductFilterSearch request , @PageableDefault(size = 30 , direction = Sort.Direction.ASC ) Pageable pageable){
+    public ApiResponse<PageResponse<ProductSummaryResponse>> getProducts(
+            @ModelAttribute ProductFilterSearch request,
+            @PageableDefault(size = 30, direction = Sort.Direction.ASC) Pageable pageable) {
         return ApiResponse.<PageResponse<ProductSummaryResponse>>builder()
-                .result(productService.getProductList(request , pageable))
+                .status(HttpStatus.OK.value())
+                .result(productService.getProductList(request, pageable))
                 .build();
     }
 
-    @GetMapping(value = "/{id}")
-    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long id ){
-        return  ApiResponse.<ProductDetailResponse>builder()
+    @Operation(summary = "Chi tiết sản phẩm (public)")
+    @GetMapping("/{id}")
+    public ApiResponse<ProductDetailResponse> getProductDetail(@PathVariable Long id) {
+        return ApiResponse.<ProductDetailResponse>builder()
                 .status(HttpStatus.OK.value())
-                .message("get product detail successful")
+                .message("Lấy chi tiết sản phẩm thành công")
                 .result(productService.getProductDetail(id))
                 .build();
     }
 
+    @Operation(summary = "Tạo sản phẩm (Admin) — multipart/form-data")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<ProductDetailResponse> createProduct(@RequestPart("product") ProductCreationRequest request ,
-                                                            @RequestPart(value = "files" , required = false)List<MultipartFile> files){
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ApiResponse<ProductDetailResponse> createProduct(
+            @RequestPart("product") ProductCreationRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
         if (files != null && request.getImages() != null && files.size() != request.getImages().size()) {
-            throw new RuntimeException("Số lượng file ảnh và thông tin ảnh không khớp nhau!");
+            throw new RuntimeException("Số file ảnh và metadata ảnh không khớp nhau");
         }
         return ApiResponse.<ProductDetailResponse>builder()
-                .status(HttpStatus.OK.value())
-                .result(productService.createProduct(request , files))
+                .status(HttpStatus.CREATED.value())
+                .message("Tạo sản phẩm thành công")
+                .result(productService.createProduct(request, files))
                 .build();
     }
 
-    @PutMapping(value = "/{id}")
-    public ApiResponse<ProductDetailResponse> updateProduct(@RequestBody ProductUpdateRequest request ,
-                                                      @PathVariable Long id ){
-
+    @Operation(summary = "Cập nhật sản phẩm (Admin)")
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ApiResponse<ProductDetailResponse> updateProduct(
+            @RequestBody ProductUpdateRequest request, @PathVariable Long id) {
         return ApiResponse.<ProductDetailResponse>builder()
                 .status(HttpStatus.OK.value())
-                .result(productService.updateProduct(request , id))
+                .message("Cập nhật sản phẩm thành công")
+                .result(productService.updateProduct(request, id))
                 .build();
     }
 
-    @DeleteMapping(value = "/{id}")
-    public ApiResponse<Object> deleteProduct(@PathVariable Long id){
+    @Operation(summary = "Xóa sản phẩm / ẩn (Admin)")
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ApiResponse<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return null ;
+        return ApiResponse.<Void>builder()
+                .status(HttpStatus.OK.value())
+                .message("Xóa sản phẩm thành công")
+                .build();
     }
-
-
-//    @PatchMapping(value = "/{id}")
-//    public ApiResponse<ProductResponse> updatePrice(@RequestBody ProductUpdateR)
-
 }

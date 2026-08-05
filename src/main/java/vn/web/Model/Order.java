@@ -61,7 +61,8 @@ public class Order  implements Serializable {
     @CreationTimestamp
     private LocalDateTime orderDate ;
 
-    @Column(name = "status")
+    // columnDefinition = VARCHAR để tránh MySQL ENUM tự giới hạn giá trị
+    @Column(name = "status", columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
     private OrderStatus status ;
 
