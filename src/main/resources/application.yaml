@@ -11,9 +11,9 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
   datasource:
-    url: jdbc:mysql://${host.ip}:${host.port}/${mysql.db}
-    username: { mysql.user }
-    password: { mysql.pass }
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${ DB_USER }
+    password: ${ DB_PASSWD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 management:
   endpoints:
