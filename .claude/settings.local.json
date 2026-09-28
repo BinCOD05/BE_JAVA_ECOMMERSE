@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\admin\\\\Desktop\\\\java-web\" -Recurse -Name)",
-      "PowerShell(head *)"
-    ]
-  }
-}
