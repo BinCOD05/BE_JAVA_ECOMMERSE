@@ -5,9 +5,9 @@ spring:
   devtools:
     add-properties: true
   datasource:
-    url: jdbc:mysql://localhost:3306/bindata
-    username: app
-    password: 12345
+    url: jdbc:mysql://localhost:3306/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 #    hikari: # Connection poll
 #      max-lifetime: 300000      # 5 phút
